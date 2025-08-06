@@ -18,6 +18,31 @@ This project follows **Clean Architecture** principles, ensuring separation of c
 
 ---
 
+## 🚀 Setup Instructions
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/posts_app.git
+   cd posts_app
+   ```
+
+2. Install dependencies:
+   ```bash
+   flutter pub get
+   ```
+
+3. Generate code:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+4. Run the app:
+   ```bash
+   flutter run
+   ```
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -58,13 +83,14 @@ This app uses **Auto Route** for declarative navigation. Routes are defined in `
 
 ### Example Route Definition:
 ```dart
-@MaterialAutoRouter(
-  routes: <AutoRoute>[
-    AutoRoute(page: PostsListPage, initial: true),
-    AutoRoute(page: PostDetailPage),
-  ],
-)
-class $AppRouter {}
+@AutoRouterConfig(replaceInRouteName: 'Page,Route')
+class AppRouter extends RootStackRouter {
+  @override
+  List<AutoRoute> get routes => <AutoRoute>[
+    AutoRoute(page: PostsListRoute.page, initial: true),
+    AutoRoute(page: PostDetailRoute.page),
+  ];
+}
 ```
 
 ### Generating Routes:
@@ -81,15 +107,87 @@ This app uses **Riverpod** for reactive state management. Providers are defined 
 
 ### Example Provider:
 ```dart
-final postsNotifierProvider = StateNotifierProvider<PostsNotifier, AsyncValue<List<Post>>>(
-  (ref) => PostsNotifier(ref.read),
-);
+import 'package:posts_app/data/models/post_model.dart';
+import 'package:posts_app/data/repositories/post_repository.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'posts_provider.g.dart';
+
+@Riverpod(keepAlive: true)
+/// State notifier for managing posts list with CRUD operations
+class PostsNotifier extends _$PostsNotifier {
+  @override
+  FutureOr<List<Post>> build() {
+    return ref.read(postRepositoryProvider).getPosts();
+  }
+
+  /// Create a new post
+  Future<void> createPost({required String title, required String body}) async {
+    try {
+      final Post newPost = await ref
+          .read(postRepositoryProvider)
+          .createPost(title: title, body: body);
+
+      state.whenData((List<Post> posts) {
+        state = AsyncValue<List<Post>>.data(<Post>[newPost, ...posts]);
+      });
+    } catch (e, st) {
+      state = state.copyWithPrevious(AsyncValue<List<Post>>.error(e, st));
+      rethrow;
+    }
+  }
+
+  /// Update an existing post
+  Future<void> updatePost(Post post) async {
+    try {
+      state.whenData((List<Post> posts) {
+        final int index = posts.indexWhere((Post p) => p.id == post.id);
+        if (index != -1) {
+          final List<Post> newPosts = <Post>[...posts];
+          newPosts[index] = post;
+          state = AsyncValue<List<Post>>.data(newPosts);
+        }
+      });
+    } catch (e, st) {
+      state = state.copyWithPrevious(AsyncValue<List<Post>>.error(e, st));
+      rethrow;
+    }
+  }
+
+  /// Delete a post
+  Future<void> deletePost(int id) async {
+    try {
+      await ref.read(postRepositoryProvider).deletePost(id);
+
+      state.whenData((List<Post> posts) {
+        state = AsyncValue<List<Post>>.data(posts.where((Post p) => p.id != id).toList());
+      });
+    } catch (e, st) {
+      state = AsyncValue<List<Post>>.error(e, st);
+      rethrow;
+    }
+  }
+}
 ```
 
 ### Key Benefits:
-- **Scoped State**: Providers are scoped to widgets.
-- **Auto Dispose**: No manual cleanup required.
-- **Testable**: Easy to mock and test providers.
+- **Scoped State**: Providers are scoped to widgets, ensuring efficient state management.
+- **Auto Dispose**: Providers automatically clean up resources when no longer needed.
+- **Testable**: Providers can be mocked easily for unit and widget testing.
+- **Async Support**: Handles asynchronous operations like fetching, creating, updating, and deleting posts seamlessly.
+
+### How to Use:
+- **Access the Provider**:
+  ```dart
+  final posts = ref.watch(postsNotifierProvider);
+  ```
+- **Perform Actions**:
+  ```dart
+  final postsNotifier = ref.read(postsNotifierProvider.notifier);
+  await postsNotifier.createPost(title: 'New Post', body: 'This is a new post.');
+  ```
+
+This updated section reflects your current `PostsNotifier` implementation and provides clear examples for usage.
 
 ---
 
@@ -235,31 +333,6 @@ This file configures the `build_runner` tool for code generation.
 ---
 
 These configurations ensure a streamlined development experience, enforce consistent coding practices, and simplify code generation.
-
----
-
-## 🚀 Setup Instructions
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/posts_app.git
-   cd posts_app
-   ```
-
-2. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-
-3. Generate code:
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
-
-4. Run the app:
-   ```bash
-   flutter run
-   ```
 
 ---
 

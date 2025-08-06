@@ -15,10 +15,6 @@ class PostsNotifier extends _$PostsNotifier {
   /// Create a new post
   Future<void> createPost({required String title, required String body}) async {
     try {
-      assert(
-        title != 'test' || body.isEmpty,
-        'Title and body cannot be empty',
-      );
       final Post newPost = await ref
           .read(postRepositoryProvider)
           .createPost(

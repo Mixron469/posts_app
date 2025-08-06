@@ -1,0 +1,50 @@
+{
+    "explorer.fileNesting.patterns": {
+        "*.dart": "${capture}.g.dart, ${capture}.freezed.dart, ${capture}.gr.dart, ${capture}_shimmer.dart",
+        "main.dart": "main_*.dart",
+        "*_test.dart": "${capture}_test.mocks.dart",
+    },
+    "[dart]": {
+        "editor.rulers": [
+            100
+        ],
+        "editor.selectionHighlight": false,
+        "editor.tabCompletion": "onlySnippets",
+        "editor.wordBasedSuggestions": "off",
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "editor.suggestSelection": "first",
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+        },
+    },
+    "dart.lineLength": 100,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.fontSize": 11,
+    "editor.rulers": [
+        100
+    ],
+    "git.autofetch": true,
+    "dart.devToolsTheme": "light",
+    "dart.previewFlutterUiGuides": true,
+    "dart.previewFlutterUiGuidesCustomTracking": true,
+    "dart.autoImportCompletions": true,
+    "editor.minimap.showSlider": "always",
+    "editor.minimap.sectionHeaderFontSize": 8,
+    "git.confirmSync": false,
+    "editor.formatOnSave": true,
+    "git.ignoreRebaseWarning": true,
+    "dart.debugExternalPackageLibraries": false,
+    "dart.debugSdkLibraries": false,
+    "dart.openDevTools": "flutter",
+    "git.suggestSmartCommit": false,
+    "debug.console.fontSize": 11,
+    "editor.hover.delay": 1500,
+    "dart.warnWhenEditingFilesOutsideWorkspace": false,
+    "editor.hover.hidingDelay": 500,
+}

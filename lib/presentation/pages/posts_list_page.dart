@@ -1,5 +1,6 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_debouncer/flutter_debouncer.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:posts_app/core/gen/assets.gen.dart';
@@ -10,6 +11,7 @@ import 'package:posts_app/presentation/providers/posts_provider.dart';
 import 'package:posts_app/presentation/widgets/post_form_dialog.dart';
 import 'package:posts_app/presentation/widgets/post_list_item.dart';
 import 'package:posts_app/presentation/widgets/post_list_item_shimmer.dart';
+import 'package:posts_app/presentation/widgets/try_again_widget.dart';
 
 @RoutePage()
 class PostsListPage extends HookConsumerWidget {
@@ -105,6 +107,8 @@ class PostsListPage extends HookConsumerWidget {
             () => filteredPosts.isEmpty && searchController.text.isNotEmpty,
           );
 
+          final Throttler throttler = Throttler();
+
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(postsNotifierProvider);
@@ -169,16 +173,21 @@ class PostsListPage extends HookConsumerWidget {
                             return PostListItem(
                               post: post,
                               onTap: () async {
-                                await context.router.pushPath<String>('/post/${post.id}').then((
-                                  String? result,
-                                ) {
-                                  if (result == 'DELETE' && context.mounted) {
-                                    context.toast.showSuccess(
-                                      title: 'Post Deleted',
-                                      message: 'The post has been deleted successfully.',
-                                    );
-                                  }
-                                });
+                                throttler.throttle(
+                                  duration: const Duration(seconds: 1),
+                                  onThrottle: () async {
+                                    await context.router.pushPath<String>('/post/${post.id}').then((
+                                      String? result,
+                                    ) {
+                                      if (result == 'DELETE' && context.mounted) {
+                                        context.toast.showSuccess(
+                                          title: 'Post Deleted',
+                                          message: 'The post has been deleted successfully.',
+                                        );
+                                      }
+                                    });
+                                  },
+                                );
                               },
                             );
                           },
@@ -226,32 +235,11 @@ class PostsListPage extends HookConsumerWidget {
           );
         },
         error: (Object error, _) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Assets.error.image(width: 100),
-                const SizedBox(height: 16),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                  child: const Text(
-                    'Sorry, something went wrong while loading posts. Please try again',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    ref.invalidate(postsNotifierProvider);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size.fromWidth(120),
-                  ),
-                  child: const Text('Try Again'),
-                ),
-              ],
-            ),
+          return TryAgainWidget(
+            message: 'Sorry, something went wrong while loading posts. Please try again',
+            onTryAgain: () {
+              ref.invalidate(postsNotifierProvider);
+            },
           );
         },
       ),

@@ -58,7 +58,7 @@ class PostsNotifier extends _$PostsNotifier {
         state = AsyncValue<List<Post>>.data(posts.where((Post p) => p.id != id).toList());
       });
     } catch (e, st) {
-      state = AsyncValue<List<Post>>.error(e, st);
+      state = state.copyWithPrevious(AsyncValue<List<Post>>.error(e, st));
       rethrow;
     }
   }

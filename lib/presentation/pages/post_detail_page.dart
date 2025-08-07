@@ -12,6 +12,7 @@ import 'package:posts_app/presentation/widgets/comment_list_item.dart';
 import 'package:posts_app/presentation/widgets/comment_list_item_shimmer.dart';
 import 'package:posts_app/presentation/widgets/delete_post_dialog.dart';
 import 'package:posts_app/presentation/widgets/post_form_dialog.dart';
+import 'package:posts_app/presentation/widgets/try_again_widget.dart';
 
 @RoutePage()
 class PostDetailPage extends HookConsumerWidget {
@@ -71,9 +72,17 @@ class PostDetailPage extends HookConsumerWidget {
           ),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object error, _) => Center(
-          child: Text('Error: ${error.toString()}'),
-        ),
+        error: (Object error, _) {
+          return Container(
+            margin: const EdgeInsets.all(16),
+            child: TryAgainWidget(
+              message: 'Sorry, something went wrong while loading the post.\nPlease try again',
+              onTryAgain: () {
+                ref.invalidate(postNotifierProvider(postId));
+              },
+            ),
+          );
+        },
       ),
     );
   }
@@ -211,17 +220,19 @@ class PostDetailPage extends HookConsumerWidget {
             if (isNewPost)
               Padding(
                 padding: const EdgeInsets.all(32),
-                child: Column(
-                  children: <Widget>[
-                    Assets.warning.image(width: 100),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Comments are not available for newly created posts.\n'
-                      'This post only exists locally.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
+                child: Center(
+                  child: Column(
+                    children: <Widget>[
+                      Assets.warning.image(width: 100),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Comments are not available for newly created posts.\n'
+                        'This post only exists locally.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
@@ -246,9 +257,15 @@ class PostDetailPage extends HookConsumerWidget {
                 loading: () => Column(
                   children: List<Widget>.generate(10, (int i) => const CommentListItemShimmer()),
                 ),
-                error: (Object error, _) => Center(
-                  child: Text('Failed to load comments: ${error.toString()}'),
-                ),
+                error: (Object error, _) {
+                  return TryAgainWidget(
+                    message:
+                        'Sorry, something went wrong while loading the comments.\nPlease try again',
+                    onTryAgain: () {
+                      ref.invalidate(commentsProvider(postId));
+                    },
+                  );
+                },
               ),
             const SizedBox(height: 32),
           ],
